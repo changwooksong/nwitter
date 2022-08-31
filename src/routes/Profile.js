@@ -1,14 +1,17 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
 import { authService, dbService } from "fbase";
+import { updateProfile } from "firebase/auth";
 
 const Profile = ({ userObj }) => {
+    const [newDisplayName, setNewDisplayName] = useState(userObj.displayName);
     const navigate = useNavigate();
     const onLogOutClick = () => {
         authService.signOut();
         navigate("/");
     };
+
     const getMyNweets = async () => {
         const q = query(
             collection(dbService, "nweets"),
@@ -23,11 +26,41 @@ const Profile = ({ userObj }) => {
         });
     };
 
+    const onChange = (event) => {
+        const {
+            target: { value },
+        } = event;
+        setNewDisplayName(value);
+    };
+
+    const onSubmit = (event) => {
+        event.preventDefault();
+        if (userObj.displayName !== newDisplayName) {
+            const updated = updateProfile(userObj, {
+                displayName: newDisplayName,
+            });
+            console.log(updated);
+        }
+    };
+
     useEffect(() => {
         getMyNweets();
     }, []);
 
-    return <button onClick={onLogOutClick}>Sign Out</button>;
+    return (
+        <>
+            <form onSubmit={onSubmit}>
+                <input
+                    type="text"
+                    placeholder="Display name"
+                    value={newDisplayName}
+                    onChange={onChange}
+                />
+                <input type="submit" value="Update Profile" />
+            </form>
+            <button onClick={onLogOutClick}>Sign Out</button>
+        </>
+    );
 };
 
 export default Profile;
